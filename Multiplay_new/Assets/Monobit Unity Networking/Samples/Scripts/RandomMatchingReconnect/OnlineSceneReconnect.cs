@@ -2,6 +2,7 @@
 using System.Collections;
 using MonobitEngine;
 using MonobitEngine.Definitions;
+using MonobitEngine.VoiceChat;
 
 public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
     private bool m_bGameStart = false;
 
     // 制限時間
-    private int battleEndFrame = 60 * 60;
+    private int battleEndFrame = 60 * 60 * 60;
 
     // 自身のオブジェクトを生成したかどうかのフラグ
     private bool spawnMyChara = false;
@@ -27,8 +28,11 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
     // 再接続する際のルーム名
     private string reconnectRoomName = "";
 
-    // GUI処理
-    void OnGUI()
+	// 音声データ量
+	private int m_bps = 0;
+
+	// GUI処理
+	void OnGUI()
     {
         // GUI用の解像度を調整する
         Vector2 guiScreenSize = new Vector2(800, 480);
@@ -43,6 +47,38 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
             GUIUtility.ScaleAroundPivot(new Vector2(Screen.width / guiScreenSize.y, Screen.height / guiScreenSize.x), Vector2.zero);
         }
 
+        // マイクデバイスの表示
+        GUILayout.Label( "Microphone: "+ MonobitMicrophone.MicrophoneDeviceName );
+
+        // マイクデバイスの切り替え
+        for(int i = 0; i < Microphone.devices.Length; ++i)
+		{
+			string name = (Microphone.devices[i].Length > 0) ? Microphone.devices[i] : null;
+
+			if (i == 0)
+			{
+				if ( null != MonobitMicrophone.MicrophoneDeviceName ){
+					// i == 0はデフォルト。デフォルトに必ず戻せるようにしておく
+					if ( GUILayout.Button( "Default" + ( ( null == name ) ? "" : " < " + name + " >" ), GUILayout.Width( 400 ) ) ){
+						MonobitMicrophone.MicrophoneDeviceName = null;
+					}
+				}
+				continue;
+			}
+			else if ( name == null)
+			{
+	            // Unity2018より前のバージョンだと、日本語を含むデバイス名が空文字列になり、選択できないので、無視
+				continue;
+			}
+           
+            // 選択済のデバイスは無視
+            if ( name == MonobitMicrophone.MicrophoneDeviceName ) continue;
+            
+            if ( GUILayout.Button( name, GUILayout.Width( 400 ) ) ){
+                MonobitMicrophone.MicrophoneDeviceName = name;
+            }
+        }
+        
         // プレイヤーIDの表示
         if (MonobitNetwork.player != null)
         {
@@ -53,8 +89,11 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
         Room room = MonobitNetwork.room;
         if (room != null)
         {
-            // ルーム名の表示
-            GUILayout.Label(string.Format("Room Name : {0}", room.name));
+			// ルーム名の表示
+			GUILayout.Label("Voice bps : " + m_bps);
+
+			// ルーム名の表示
+			GUILayout.Label(string.Format("Room Name : {0}", room.name));
 
             // ルーム内に存在するプレイヤー数の表示
             GUILayout.Label(string.Format("PlayerCount : {0}", room.playerCount));
@@ -219,6 +258,31 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
         }
     }
 
+    // 自オブジェクトをスポーン
+    void SpawnMyObject()
+    {
+        // プレイヤーの配置（他クライアントにも同時にInstantiateする）
+        myObject = MonobitNetwork.Instantiate("SD_unitychan_generic_PC", myPosition, myRotation, 0);
+        if (myObject != null)
+        {
+            var wrapper = myObject.GetComponent<MonobitVoice>();
+            wrapper.SetCallVoiceDataBps(VoiceDataBps);
+            wrapper.SetMicrophoneErrorHandler(OnMicrophoneError);
+            wrapper.SetMicrophoneRestartHandler(OnMicrophoneRestart);
+        }
+
+        // 出現させたことを確認
+        spawnMyChara = true;
+    }
+    
+    // 自オブジェクトをリスポーン
+    void RespawnMyObject()
+    {
+        UnityEngine.Debug.Log( "RespawnMyObject myObject="+ myObject );
+        if ( null != myObject ) MonobitNetwork.Destroy( myObject );
+        SpawnMyObject();
+    }
+    
     // ゲームスタートを受信(RPC)
     [MunRPC]
     void OnGameStart()
@@ -257,6 +321,41 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
         this.battleEndFrame = frame;
     }
 
+	// bpsデータを取得
+	void VoiceDataBps(int bps)
+	{
+		m_bps = bps;
+	}
+
+	/// <summary>
+	/// マイクのエラーハンドリング用デリゲート
+	/// </summary>
+	/// <returns>
+	/// true : 内部にてStopCaptureを実行しループを抜けます。
+	/// false: StopCaptureを実行せずにループを抜けます。
+	/// </returns>
+	public bool OnMicrophoneError()
+	{
+		UnityEngine.Debug.LogError("Error: Microphone Error !!!");
+		return true;
+	}
+
+	/// <summary>
+	/// マイクのリスタート用デリゲート
+	/// </summary>
+	/// <remarks>
+	/// 呼び出された時点ではすでにStopCaptureされています。
+	/// </remarks>
+	public void OnMicrophoneRestart()
+	{
+		UnityEngine.Debug.LogWarning("Info: Microphone Restart !!!");
+		
+		// マイクを挿し直した後で、
+		// マイク入力を正常に機能させるためには、
+		// 自オブジェクトをリスポーンするのが簡単
+		RespawnMyObject();
+	}
+
     // RPCのBuffered確認用(RPC)
     [MunRPC]
     void BufferedRPC( int playerId, int frame )
@@ -264,8 +363,8 @@ public class OnlineSceneReconnect : MonobitEngine.MonoBehaviour
         Debug.Log( System.String.Format( "BufferedRPC playerId={0} frame={1}", playerId, frame ) );
     }
 
-    // 接続が切断されたときの処理
-    public void OnDisconnectedFromServer()
+	// 接続が切断されたときの処理
+	public void OnDisconnectedFromServer()
     {
         Debug.Log("Disconnected from Monobit");
         bDisconnecting = true;

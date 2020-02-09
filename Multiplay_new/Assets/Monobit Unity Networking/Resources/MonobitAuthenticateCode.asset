@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 866318651, guid: aa49a80689af50d47948c3793b5e6082, type: 3}
+  m_Script: {fileID: 866318651, guid: fc2e469d7303e294eac72719300d0a21, type: 3}
   m_Name: MonobitAuthenticateCode
   m_EditorClassIdentifier: 
-  saveAuthID: J5HGgxmhS1E2D90hSjhymvj457etae3sFBaTdKNuyc4QU8dYvHWZrnoV+EKOiPoJc2RKXgn2qQxyWIZ7iMoxdw==
+  saveAuthID: L0aMGbsZ8EzJmB1fp/U6VQ/Fgz7IuZOaQ+aN+kGQj45Rh4B5KsTkvylgIXxtk+/i3r+3NGGJpg7kJ3pvifSWGg==
