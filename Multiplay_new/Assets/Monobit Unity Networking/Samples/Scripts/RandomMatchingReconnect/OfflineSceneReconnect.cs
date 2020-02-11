@@ -7,25 +7,25 @@ using MonobitEngine.Definitions;
 
 public class OfflineSceneReconnect : MonobitEngine.MonoBehaviour
 {
-    // シーンファイル名
-    public static readonly string SceneNameOffline = "OfflineSceneReconnect";
-    public static readonly string SceneNameOnline = "OnlineSceneReconnect";
+	// シーンファイル名
+	public static readonly string SceneNameOffline = "OfflineSceneReconnect";
+	public static readonly string SceneNameOnline = "OnlineSceneReconnect";
 
-    // マッチングルームの最大人数
-    private byte maxPlayers = 10;
+	// マッチングルームの最大人数
+	private byte maxPlayers = 10;
 
-    // ルーム名
-    private string roomName = "roomName";
+	// ルーム名
+	private string roomName = "roomName";
 
-    // ルームリスト
-    RoomData[] m_RoomData = null;
+	// ルームリスト
+	RoomData[] m_RoomData = null;
 
 	// ホストプレイヤーが必要かどうかのフラグ
 	private bool isNeedHostPlayer = true;
 
 	// 開始関数
 	public void Awake()
-    {
+	{
 		// デフォルトロビーへの強制入室をONにする。
 		MonobitNetwork.autoJoinLobby = true;
 
@@ -36,26 +36,26 @@ public class OfflineSceneReconnect : MonobitEngine.MonoBehaviour
 		if (! MonobitNetwork.isConnect)
         {
 			MonobitNetwork.ConnectServer("RandomMatchingReconnect_v1.0");
-        }
-    }
+		}
+	}
 
-    // GUIまわりの記述
-    public void OnGUI()
-    {
-        // GUI用の解像度を調整する
-        Vector2 guiScreenSize = new Vector2(800, 480);
-        if (Screen.width > Screen.height)
-        {
-            // landscape
-            GUIUtility.ScaleAroundPivot(new Vector2(Screen.width / guiScreenSize.x, Screen.height / guiScreenSize.y), Vector2.zero);
-        }
-        else
-        {
-            // portrait
-            GUIUtility.ScaleAroundPivot(new Vector2(Screen.width / guiScreenSize.y, Screen.height / guiScreenSize.x), Vector2.zero);
-        }
+	// GUIまわりの記述
+	public void OnGUI()
+	{
+		// GUI用の解像度を調整する
+		Vector2 guiScreenSize = new Vector2(800, 480);
+		if (Screen.width > Screen.height)
+		{
+			// landscape
+			GUIUtility.ScaleAroundPivot(new Vector2(Screen.width / guiScreenSize.x, Screen.height / guiScreenSize.y), Vector2.zero);
+		}
+		else
+		{
+			// portrait
+			GUIUtility.ScaleAroundPivot(new Vector2(Screen.width / guiScreenSize.y, Screen.height / guiScreenSize.x), Vector2.zero);
+		}
 
-        if ( MonobitNetwork.isConnect )
+		if ( MonobitNetwork.isConnect )
 		{
 			// ルーム一覧を取得
 			m_RoomData = MonobitNetwork.GetRoomData();
@@ -96,13 +96,13 @@ public class OfflineSceneReconnect : MonobitEngine.MonoBehaviour
 
 		// シーンをオンラインシーンに
 		MonobitNetwork.LoadLevel(SceneNameOnline);
-    }
+	}
 
 	// ルーム作成失敗時の処理
 	public void OnCreateRoomFailed(object[] parameters)
-    {
-        Debug.Log("OnCreateRoomFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
-    }
+	{
+		Debug.Log("OnCreateRoomFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
+	}
 
 	// ルーム入室時の処理
 	public void OnJoinedRoom()
@@ -111,31 +111,31 @@ public class OfflineSceneReconnect : MonobitEngine.MonoBehaviour
 
 		// シーンをオンラインシーンに
 		MonobitNetwork.LoadLevel(SceneNameOnline);
-    }
+	}
 
 	// ランダムルーム入室失敗時の処理
 	public void OnMonobitRandomJoinFailed(object[] parameters)
-    {
-        Debug.Log("OnMonobitRandomJoinFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
-    }
+	{
+		Debug.Log("OnMonobitRandomJoinFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
+	}
 
 	// 指定ルーム入室失敗時の処理
 	public void OnJoinRoomFailed(object[] parameters)
-    {
-        Debug.Log("OnJoinRoomFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
-    }
+	{
+		Debug.Log("OnJoinRoomFailed : ErrorCode = " + parameters[0] + ", DebugMsg = " + parameters[1]);
+	}
 
 	// 接続が切断されたときの処理
 	public void OnDisconnectedFromServer()
-    {
-        Debug.Log("OnDisconnectedFromServer");
-    }
+	{
+		Debug.Log("OnDisconnectedFromServer");
+	}
 
 	// 接続失敗時の処理
 	public void OnConnectToServerFailed(object parameters)
-    {
-        Debug.Log("OnConnectToServerFailed : StatusCode = " + parameters + ", ServerAddress = " + MonobitNetwork.ServerAddress);
-    }
+	{
+		Debug.Log("OnConnectToServerFailed : StatusCode = " + parameters + ", ServerAddress = " + MonobitNetwork.ServerAddress);
+	}
 
 	// ロビー接続時の処理
 	public void OnJoinedLobby()
